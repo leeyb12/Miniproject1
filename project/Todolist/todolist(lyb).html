@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>To-Do List</title>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      background: linear-gradient(135deg, #74ebd5, #ACB6E5);
+      display: flex;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    .container {
+      width: 900px;
+      height: 600px;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .input-box {
+      display: flex;
+      gap: 10px;
+    }
+
+    input {
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      flex: 1;
+    }
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    button {
+      border: none;
+      padding: 6px 12px;
+      cursor: pointer;
+      border-radius: 10px;
+    }
+
+    .add {
+      background: #3498db;
+      color: white;
+    }
+
+    ul {
+      list-style: none;
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
+      padding: 0 10px;
+    }
+
+    li {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      border-radius: 10px;
+      background: #f9f9f9;
+    }
+
+    .left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .done {
+      text-decoration: line-through;
+      color: gray;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 5px;
+      margin-left: auto;
+    }
+
+    .delete {
+      background: red;
+      color: white;
+    }
+
+    .edit {
+      background: orange;
+      color: white;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    /* 챗봇 */
+    .chat-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #3498db;
+      color: white;
+      font-size: 24px;
+    }
+
+    .chat-modal {
+      position: fixed;
+      bottom: 90px;
+      right: 20px;
+      width: 300px;
+      height: 400px;
+      background: white;
+      border-radius: 12px;
+      display: none;
+      flex-direction: column;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    }
+
+    .chat-header {
+      padding: 10px;
+      background: #3498db;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .chat-body {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+    }
+
+    .chat-footer {
+      display: flex;
+    }
+
+    .chat-footer input {
+      flex: 1;
+    }
+
+    .msg {
+      margin-bottom: 8px;
+    }
+
+    .me { text-align: right; }
+    .bot { text-align: left; }
+
+    .clear-btn {
+      background: red;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>To-Do List</h1>
+
+    <div class="input-box">
+      <input type="text" id="input" placeholder="할 일 입력">
+      <button class="add">등록</button>
+    </div>
+
+    <ul></ul>
+  </div>
+
+  <button class="chat-btn">💬</button>
+
+  <div class="chat-modal">
+    <div class="chat-header">
+      <span>ChatBot</span>
+      <button class="clear-btn">전체삭제</button>
+    </div>
+    <div class="chat-body"></div>
+    <div class="chat-footer">
+      <input type="text" placeholder="메시지 입력">
+      <button>전송</button>
+    </div>
+  </div>
+
+  <script>
+    const input = document.getElementById('input');
+    const addBtn = document.querySelector('.add');
+    const ul = document.querySelector('ul');
+
+    let todos = JSON.parse(localStorage.getItem('todos')) || [];
+
+    todos.forEach(todo => createTodo(todo));
+
+    addBtn.addEventListener('click', () => {
+      if (!input.value.trim()) return;
+
+      const newTodo = {
+        id: Date.now(),
+        text: input.value,
+        done: false
+      };
+
+      todos.push(newTodo);
+      localStorage.setItem('todos', JSON.stringify(todos));
+
+      createTodo(newTodo);
+      input.value = '';
+    });
+
+    function createTodo(todo) {
+      const li = document.createElement('li');
+
+      const left = document.createElement('div');
+      left.className = 'left';
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = todo.done;
+
+      const span = document.createElement('span');
+      span.innerText = todo.text;
+      if (todo.done) span.classList.add('done');
+
+      checkbox.addEventListener('change', () => {
+        todo.done = checkbox.checked;
+        span.classList.toggle('done');
+        localStorage.setItem('todos', JSON.stringify(todos));
+      });
+
+      left.appendChild(checkbox);
+      left.appendChild(span);
+
+      const btnGroup = document.createElement('div');
+      btnGroup.className = 'btn-group';
+
+      const editBtn = document.createElement('button');
+      editBtn.innerText = '수정';
+      editBtn.className = 'edit';
+
+      editBtn.onclick = () => {
+        const editInput = document.createElement('input');
+        editInput.value = todo.text;
+
+        left.replaceChild(editInput, span);
+        editInput.focus();
+
+        const saveEdit = () => {
+          const newText = editInput.value.trim();
+          if (newText) {
+            todo.text = newText;
+            span.innerText = newText;
+            localStorage.setItem('todos', JSON.stringify(todos));
+          }
+          left.replaceChild(span, editInput);
+        };
+
+        editInput.addEventListener('blur', saveEdit);
+        editInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') saveEdit();
+        });
+      };
+
+      const delBtn = document.createElement('button');
+      delBtn.innerText = '삭제';
+      delBtn.className = 'delete';
+
+      delBtn.onclick = () => {
+        li.remove();
+        todos = todos.filter(t => t.id !== todo.id);
+        localStorage.setItem('todos', JSON.stringify(todos));
+      };
+
+      btnGroup.appendChild(editBtn);
+      btnGroup.appendChild(delBtn);
+
+      li.appendChild(left);
+      li.appendChild(btnGroup);
+
+      ul.appendChild(li);
+    }
+  </script>
+</body>
+</html>
