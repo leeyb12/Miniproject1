@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>chatbot</title>
+    <style>
+      .chat-container {
+        background-color: white;
+        width: 500px;
+        height: 500px;
+        margin: auto;
+        padding: 1rem 3rem 0 3rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+        display: flex;
+        flex-direction: column;
+        transform: translateY(50%);
+        border-radius: 20px;
+      }
+      .message {
+        display: flex;
+        flex-direction: column;
+      }
+      .messages {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+      }
+      .message.bot {
+        align-items: flex-start;
+      }
+      .message.user {
+        align-items: flex-end;
+      }
+      .name {
+        font-size: 0.8rem;
+        color: #555;
+        margin: 0 10px 2px;
+      }
+      .bubble {
+        max-width: 300px;
+        background-color: rgb(243, 238, 190);
+        padding: 0.7rem 2rem;
+        border-radius: 20px;
+        word-break: break-word;
+      }
+      .user .bubble {
+        background-color: yellow;
+        text-align: right;
+      }
+      .user .name {
+        text-align: right;
+      }
+      .chat-container::-webkit-scrollbar {
+        background-color: aliceblue;
+        border-radius: 0 6px 6px 0;
+        width: 30px;
+      }
+      .chat-container::-webkit-scrollbar-thumb {
+        background-color: rgb(89, 156, 233);
+        border-radius: 6px;
+      }
+      .input-area {
+        display: flex;
+        gap: 10px;
+        padding: 10px 0;
+      }
+
+      #userInput {
+        flex: 1;
+        padding: 10px;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+      }
+
+      #sendBtn {
+        padding: 10px 20px;
+        border-radius: 10px;
+        border: none;
+        background-color: gold;
+        cursor: pointer;
+      }
+      .delete-btn {
+        margin-top: 5px;
+        background: none;
+        border: none;
+        color: red;
+        cursor: pointer;
+        font-size: 0.7rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="chat-container">
+      <div class="messages">
+        <div class="message bot">
+          <div class="name">myBot</div>
+          <div class="bubble">안녕하세요. 무엇을 도와드릴까요?</div>
+        </div>
+      </div>
+
+      <div class="input-area">
+        <input id="userInput" type="text" placeholder="메시지를 입력하세요" />
+        <button id="sendBtn">전송</button>
+      </div>
+    </div>
+
+    <script>
+      const messages = document.querySelector(".messages");
+      const input = document.querySelector("#userInput");
+      const sendBtn = document.querySelector("#sendBtn");
+
+      function addUserMessage(id, text) {
+        const message = document.createElement("div");
+        message.classList.add("message", "user");
+        message.dataset.id = id;
+
+        const name = document.createElement("div");
+        name.classList.add("name");
+        name.textContent = "나";
+
+        const bubble = document.createElement("div");
+        bubble.classList.add("bubble");
+        bubble.textContent = text;
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "삭제";
+        deleteBtn.classList.add("delete-btn");
+
+        deleteBtn.addEventListener("click", () => {
+          message.remove();
+
+          let chatHistory =
+            JSON.parse(localStorage.getItem("chatHistory")) || [];
+          chatHistory = chatHistory.filter((msg) => msg.id !== id);
+          localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
+        });
+
+        message.appendChild(name);
+        message.appendChild(bubble);
+        message.appendChild(deleteBtn);
+
+        messages.appendChild(message);
+
+        messages.scrollTop = messages.scrollHeight;
+      }
+
+      function saveMessage(id, text) {
+        let chatHistory = JSON.parse(localStorage.getItem("chatHistory")) || [];
+        chatHistory.push({ id, sender: "user", text });
+        localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
+      }
+
+      function loadMessages() {
+        const saved = JSON.parse(localStorage.getItem("chatHistory")) || [];
+        saved.forEach((msg) => {
+          addUserMessage(msg.id, msg.text);
+        });
+      }
+
+      sendBtn.addEventListener("click", () => {
+        const text = input.value.trim();
+        if (text === "") return;
+
+        const id = Date.now();
+        addUserMessage(id, text);
+        saveMessage(id, text);
+
+        input.value = "";
+      });
+
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          sendBtn.click();
+        }
+      });
+
+      loadMessages();
+    </script>
+  </body>
+</html>
